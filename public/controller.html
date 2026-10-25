@@ -1,308 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>TrackRacer Cockpit</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0; width: 100vw; height: 100vh;
-      width: 100dvw; height: 100dvh; background: #111; color: #fff;
-      font-family: sans-serif; overflow: hidden; position: fixed; inset: 0;
-    }
-    canvas { display: block; width: 100vw !important; height: 100vh !important; }
-    #start-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.95);
-      display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
-      padding: 20px; text-align: center;
-    }
-    h2 { color: #00e676; margin-bottom: 5px; }
-    .class-container {
-      display: flex; gap: 12px; margin: 20px 0; width: 100%; max-width: 450px;
-    }
-    .class-btn {
-      flex: 1; padding: 15px 10px; font-size: 16px; border-radius: 10px;
-      background: #222; border: 2px solid #444; color: #fff; cursor: pointer;
-      font-weight: bold; transition: 0.2s;
-    }
-    .class-btn.selected {
-      border-color: #00e676; background: rgba(0,230,118,0.15); color: #00e676;
-    }
-    #launch-btn {
-      padding: 18px 40px; font-size: 20px; border-radius: 12px;
-      background: #00e676; border: none; font-weight: bold; cursor: pointer; color: #111;
-      box-shadow: 0 4px 15px rgba(0,230,118,0.4); margin-top: 10px;
-    }
-    #gas-pedal {
-      display: none; position: fixed; right: 30px; bottom: 30px;
-      width: 120px; height: 120px; background: rgba(0, 230, 118, 0.2);
-      border: 3px solid #00e676; border-radius: 50%; z-index: 50;
-      align-items: center; justify-content: center; font-size: 42px; color: #00e676;
-      user-select: none; -webkit-user-select: none; box-shadow: 0 0 20px rgba(0,230,118,0.3);
-    }
-    #gas-pedal:active, #gas-pedal.active {
-      background: rgba(0, 230, 118, 0.7); color: #111; transform: scale(0.95);
-    }
-    #rotate-warning {
-      display: none; position: fixed; inset: 0; background: #111; z-index: 200;
-      align-items: center; justify-content: center; text-align: center; padding: 30px; font-size: 22px; color: gold;
-    }
-    @media screen and (orientation: portrait) {
-      #rotate-warning { display: flex; }
-    }
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.7">
+  <style type="text/css">
+    body {background-color: #0e0e0e}
+    p.p2 {margin: 0.0px 0.0px 10.0px 0.0px; text-align: center; font: 14.0px Helvetica; color: #9a9a9a; -webkit-text-stroke: #9a9a9a}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 16.0px 'Helvetica Neue'; color: #1ee663; -webkit-text-stroke: #1ee663}
+    p.p4 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 11.0px 'Helvetica Neue'; color: #9a9a9a; -webkit-text-stroke: #9a9a9a; background-color: #1ee663; background-color: rgba(30, 230, 99, 0.15)}
+    p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 16.0px 'Helvetica Neue'; color: #ffffff; -webkit-text-stroke: #ffffff}
+    p.p6 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 11.0px 'Helvetica Neue'; color: #9a9a9a; -webkit-text-stroke: #9a9a9a; background-color: #1a1a1a}
+    p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: center; font: 20.0px 'Helvetica Neue'; color: #0e0e0e; -webkit-text-stroke: #0e0e0e; background-color: #1ee663}
+    p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; color: #ffffff; -webkit-text-stroke: #ffffff}
+    span.s1 {font-kerning: none; background-color: rgba(0, 0, 0, 0.95)}
+    span.s2 {font-kerning: none; background-color: rgba(30, 230, 99, 0.15)}
+    span.s3 {font-kerning: none}
+    span.s4 {font-kerning: none; background-color: #1a1a1a}
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <!-- Add GLTFLoader -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-
-  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-
-  <div id="rotate-warning">📱 Please rotate your phone to landscape mode to access the cockpit!</div>
-
-  <div id="start-overlay">
-    <h2>UberRacer Cockpit</h2>
-    <p style="color: #aaa; font-size: 14px; margin-bottom: 10px;">Select your ride class:</p>
-    
-    <div class="class-container">
-      <button class="class-btn selected" data-class="Small">Small<br><span style="font-size:11px; color:#aaa;">Agile / Fast</span></button>
-      <button class="class-btn" data-class="Large">Large<br><span style="font-size:11px; color:#aaa;">XL / Tank</span></button>
-      <button class="class-btn" data-class="Bougie">Bougie<br><span style="font-size:11px; color:#aaa;">Black / Pro</span></button>
-    </div>
-
-    <button id="launch-btn">Launch Shift</button>
-  </div>
-
-  <div id="gas-pedal">▲</div>
-
-  <script>
-    const socket = io();
-    const launchBtn = document.getElementById('launch-btn');
-    const overlay = document.getElementById('start-overlay');
-    const gasPedal = document.getElementById('gas-pedal');
-    const classButtons = document.querySelectorAll('.class-btn');
-
-    let selectedClass = 'Small';
-    let myPlayerId = null;
-    let posX = 0, posZ = 0, rotationAngle = 0, isAccelerating = false;
-    let steeringInput = 0;
-    const cars = {};
-
-    // Handle vehicle class selection UI
-    classButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        classButtons.forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        selectedClass = btn.getAttribute('data-class');
-      });
-    });
-
-    // Three.js Setup on Phone
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a1a);
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    dirLight.position.set(10, 20, 10);
-    scene.add(dirLight);
-
-    const gridHelper = new THREE.GridHelper(300, 100, 0x00ffff, 0x444444);
-    scene.add(gridHelper);
-
-    const gltfLoader = new THREE.GLTFLoader();
-const modelCache = {}; // Cache to prevent reloading and crashing mobile memory
-
-function createCarModel(carClass) {
-  const group = new THREE.Group();
-
-  // Temporary placeholder box so the screen doesn't block while fetching
-  const placeholderMat = new THREE.MeshStandardMaterial({ 
-    color: carClass === 'Large' ? 0x2979ff : (carClass === 'Bougie' ? 0xffd700 : 0x00e676) 
-  });
-  const placeholder = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 2.0), placeholderMat);
-  placeholder.position.y = 0.3;
-  group.add(placeholder);
-
-  let modelPath = '';
-  if (carClass === 'Small') {
-    modelPath = '/models/2025_toyota_camry_xv80_hybrid/scene.gltf'; 
-  } else if (carClass === 'Large') {
-    modelPath = '/models/toyota_fortuner_2021/scene.gltf';
-  } else if (carClass === 'Bougie') {
-    modelPath = '/models/2006_toyota_century_royal/scene.gltf';
-  }
-
-  // Check cache first so we don't crash mobile RAM
-  if (modelCache[modelPath]) {
-    group.remove(placeholder);
-    group.add(modelCache[modelPath].clone(true));
-  } else {
-    gltfLoader.load(modelPath, (gltf) => {
-      group.remove(placeholder);
-      
-      const model = gltf.scene;
-      model.scale.set(1, 1, 1);
-      model.position.set(0, 0, 0);
-      
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      // Save a clone into cache
-      modelCache[modelPath] = model;
-      group.add(model.clone(true));
-    }, undefined, (error) => {
-      console.warn('Could not load GLTF model for ' + carClass, error);
-    });
-  }
-
-  return group;
-}
-
-    socket.on('assigned-player', (data) => {
-      myPlayerId = data.playerId;
-    });
-
-    socket.on('sync-players', (players) => {
-      for (let id in players) {
-        if (!cars[id]) {
-          const pData = players[id];
-          const carGroup = createCarModel(pData.carClass || 'Small');
-          scene.add(carGroup);
-          cars[id] = { group: carGroup, posX: pData.posX || 0, posZ: pData.posZ || 0, rotationAngle: pData.rotationAngle || 0, accelerating: false };
-        }
-      }
-    });
-
-    socket.on('update-car-state', (data) => {
-      if (cars[data.playerId]) {
-        cars[data.playerId].posX = data.posX;
-        cars[data.playerId].posZ = data.posZ;
-        cars[data.playerId].rotationAngle = data.rotationAngle;
-        cars[data.playerId].accelerating = data.accelerating;
-      } else {
-        const carGroup = createCarModel(data.carClass || 'Small');
-        scene.add(carGroup);
-        cars[data.playerId] = { group: carGroup, posX: data.posX, posZ: data.posZ, rotationAngle: data.rotationAngle, accelerating: data.accelerating };
-      }
-    });
-
-    socket.on('player-left', (data) => {
-      if (cars[data.playerId]) {
-        scene.remove(cars[data.playerId].group);
-        delete cars[data.playerId];
-      }
-    });
-
-    launchBtn.addEventListener('click', async () => {
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        try {
-          const response = await DeviceOrientationEvent.requestPermission();
-          if (response !== 'granted') {
-            alert("Motion permission is required to steer!");
-            return;
-          }
-        } catch (e) {
-          console.error("Permission error:", e);
-        }
-      }
-
-      overlay.style.display = 'none';
-      gasPedal.style.display = 'flex';
-      
-      // Pass the selected car class when joining the game
-      socket.emit('join-game', { carClass: selectedClass });
-
-      window.addEventListener('deviceorientation', (e) => {
-        let steeringVal = e.beta || 0; 
-        steeringInput = Math.max(-1, Math.min(1, steeringVal / 25));
-      }, true);
-    });
-
-    gasPedal.addEventListener('touchstart', (e) => { e.preventDefault(); isAccelerating = true; gasPedal.classList.add('active'); });
-    gasPedal.addEventListener('touchend', (e) => { e.preventDefault(); isAccelerating = false; gasPedal.classList.remove('active'); });
-    gasPedal.addEventListener('mousedown', () => { isAccelerating = true; gasPedal.classList.add('active'); });
-    gasPedal.addEventListener('mouseup', () => { isAccelerating = false; gasPedal.classList.remove('active'); });
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // Unique stats handling per vehicle class
-      let speed = 0.3;
-      let turnSpeed = 0.04;
-      if (selectedClass === 'Large') { speed = 0.22; turnSpeed = 0.03; } // Slower, wider turns
-      if (selectedClass === 'Bougie') { speed = 0.36; turnSpeed = 0.045; } // Faster top speed
-
-      if (isAccelerating) {
-        rotationAngle -= steeringInput * turnSpeed;
-        posX += Math.sin(rotationAngle) * speed;
-        posZ += Math.cos(rotationAngle) * speed;
-      }
-
-      if (myPlayerId) {
-        socket.emit('steering-input', {
-          playerId: myPlayerId,
-          carClass: selectedClass,
-          posX: posX,
-          posZ: posZ,
-          rotationAngle: rotationAngle,
-          accelerating: isAccelerating
-        });
-
-        if (cars[myPlayerId]) {
-          cars[myPlayerId].posX = posX;
-          cars[myPlayerId].posZ = posZ;
-          cars[myPlayerId].rotationAngle = rotationAngle;
-          cars[myPlayerId].accelerating = isAccelerating;
-        }
-      }
-
-      for (let id in cars) {
-        let data = cars[id];
-        let carGroup = data.group;
-
-        carGroup.position.x = data.posX;
-        carGroup.position.z = data.posZ;
-        carGroup.rotation.y = data.rotationAngle;
-
-        if (id === myPlayerId) {
-          let camDist = 5;
-          let camHeight = 2.5;
-          camera.position.x = carGroup.position.x - Math.sin(rotationAngle) * camDist;
-          camera.position.z = carGroup.position.z - Math.cos(rotationAngle) * camDist;
-          camera.position.y = carGroup.position.y + camHeight;
-          
-          camera.lookAt(
-            carGroup.position.x + Math.sin(rotationAngle) * 2,
-            carGroup.position.y,
-            carGroup.position.z + Math.cos(rotationAngle) * 2
-          );
-        }
-      }
-
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+<h2 style="margin: 0.0px 0.0px 5.0px 0.0px; text-align: center; font: 18.0px Helvetica; color: #1ee663; -webkit-text-stroke: #1ee663"><span class="s1"><b>UberRacer Cockpit</b><b></b></span></h2>
+<p class="p2"><span class="s1">Select your ride class:</span></p>
+<p class="p3"><span class="s2"><b>Small</b><b></b></span></p>
+<p class="p4"><span class="s3"><b>Agile / Fast</b><b></b></span></p>
+<p class="p5"><span class="s4"><b>Large</b><b></b></span></p>
+<p class="p6"><span class="s3"><b>XL / Tank</b><b></b></span></p>
+<p class="p5"><span class="s4"><b>Bougie</b><b></b></span></p>
+<p class="p6"><span class="s3"><b>Black / Pro</b><b></b></span></p>
+<p class="p7"><span class="s3"><b>Launch Shift</b></span></p>
+<p class="p8"><span class="s3">&gt;&gt;&gt;&gt;&gt;&gt;&gt; be53459e8a51cbbcc92b2d94dcd4c4012ea6baeb</span></p>
 </body>
 </html>
