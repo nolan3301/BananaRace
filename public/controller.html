@@ -358,6 +358,9 @@ h2 { color: #00e676; margin-bottom: 5px; }
 
 <div id="gas-pedal">▲</div>
 
+<div id="hud" style="position:fixed;top:10px;left:10px;z-index:60;font-size:20px;color:#ffe135;"></div>
+
+
 <!-- Cockpit script (wrapped so its variable names don't clash with game.js) -->
 <script>
 (function () {
@@ -469,6 +472,7 @@ h2 { color: #00e676; margin-bottom: 5px; }
     }
     overlay.style.display = 'none';
     gasPedal.style.display = 'flex';
+    startSpawning();
     socket.emit('join-game', { carClass: selectedClass });
     window.addEventListener('deviceorientation', (e) => {
       let steeringVal = e.beta || 0;
@@ -480,6 +484,67 @@ h2 { color: #00e676; margin-bottom: 5px; }
   gasPedal.addEventListener('touchend', (e) => { e.preventDefault(); isAccelerating = false; gasPedal.classList.remove('active'); });
   gasPedal.addEventListener('mousedown', () => { isAccelerating = true; gasPedal.classList.add('active'); });
   gasPedal.addEventListener('mouseup', () => { isAccelerating = false; gasPedal.classList.remove('active'); });
+
+  // ---- Banana fares ----
+const fares = [];
+let carrying = null;
+
+function createBanana() {
+  const g = new THREE.Group();
+  const yellow = new THREE.MeshStandardMaterial({ color: 0xffe135, roughness: 0.5 });
+  const brown = new THREE.MeshStandardMaterial({ color: 0x4a2f10 });
+  const body = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.18, 8, 16, Math.PI * 0.9), yellow);
+  body.rotation.z = Math.PI * 1.05;
+  const tipL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), brown);
+  const tipR = tipL.clone();
+  tipL.position.set(-0.59, -0.09, 0);
+  tipR.position.set(0.59, -0.09, 0);
+  g.add(body, tipL, tipR);
+  g.scale.set(1.5, 1.5, 1.5);
+  g.position.y = 1.2;
+  return g;
+}
+
+function spawnFare() {
+  if (fares.length >= 3 || carrying) return;
+  const count = 1 + Math.floor(Math.random() * 3);
+  const angle = Math.random() * Math.PI * 2;
+  const dist = 20 + Math.random() * 30;
+  const x = posX + Math.sin(angle) * dist;
+  const z = posZ + Math.cos(angle) * dist;
+  const group = new THREE.Group();
+  for (let i = 0; i < count; i++) {
+    const b = createBanana();
+    b.position.x = (i - (count - 1) / 2) * 1.8;
+    group.add(b);
+  }
+  group.position.set(x, 0, z);
+  scene.add(group);
+  fares.push({ group, x, z, count, expires: Date.now() + 23000 });
+}
+
+function startSpawning() { setInterval(spawnFare, 4000); }
+
+function updateFares() {
+  const now = Date.now();
+  for (let i = fares.length - 1; i >= 0; i--) {
+    const f = fares[i];
+    f.group.rotation.y += 0.02;
+    if (now > f.expires) {
+      scene.remove(f.group);
+      fares.splice(i, 1);
+      continue;
+    }
+    if (!carrying && Math.hypot(posX - f.x, posZ - f.z) < 3) {
+      carrying = { count: f.count };
+      scene.remove(f.group);
+      fares.splice(i, 1);
+      document.getElementById('hud').textContent = '🍌 x' + f.count + ' on board';
+    }
+  }
+}
+// so to this is the end for banana fares
+
 
   function animate() {
     requestAnimationFrame(animate);
@@ -526,6 +591,7 @@ h2 { color: #00e676; margin-bottom: 5px; }
         );
       }
     }
+    updateFares();
     renderer.render(scene, camera);
   }
   animate();
@@ -538,7 +604,6 @@ h2 { color: #00e676; margin-bottom: 5px; }
 })();
 </script>
 
-<!-- Map game: game.js first so initMap exists when Google calls it -->
 <script>
 function initMap() {
   new google.maps.Map(document.getElementById('map'), {
