@@ -19,7 +19,7 @@ let nextPassengerId = 1;
 
 const PICKUP_WINDOW_MS = 23000;    // how long a waiting passenger stays on the road
 const CANCEL_COOLDOWN_MS = 20000;
-const MIN_PLAYERS = 4;             // the host can't start a match with fewer drivers than this
+const MIN_PLAYERS = 2;             // the host can't start a match with fewer drivers than this
 
 // ---- scaling: more drivers = more passengers, spawning faster ----
 const playerCount = () => Object.keys(players).length;
